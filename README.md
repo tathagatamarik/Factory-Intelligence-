@@ -20,6 +20,7 @@ data/mock_leave_balances.csv     Sample fictional employee leave data
 data/sample_hr_policy.txt        Sample HR policy document (leave / WFH / reimbursement)
 models/                          Folder for YOLOv8 PPE weight file (see models/README.md)
 requirements.txt
+packages.txt                     System (apt) packages required by opencv on Streamlit Cloud
 .streamlit/secrets.toml.example  Template for the Groq API key
 ```
 
@@ -96,7 +97,9 @@ with a visible on-screen notice explaining why.
 ## Deployment on Streamlit Cloud
 
 1. Push this project to a GitHub repository (do **not** commit `.streamlit/secrets.toml` —
-   only commit `.streamlit/secrets.toml.example`).
+   only commit `.streamlit/secrets.toml.example`). Make sure `packages.txt` is committed too —
+   it installs the system graphics libraries OpenCV needs on Streamlit Cloud's minimal
+   container (see Troubleshooting below if you skip this and hit an `ImportError` on `cv2`).
 2. In Streamlit Cloud, create a new app pointing at this repository and `app.py`.
 3. In the app's **Settings > Secrets**, paste the contents of your local
    `.streamlit/secrets.toml` (with your real `GROQ_API_KEY`).
@@ -136,3 +139,13 @@ with a visible on-screen notice explaining why.
   (e.g. https://console.groq.com/docs/models for Groq) and update the IDs there.
 - **Video upload feels slow**: reduce "max sampled frames" or increase "process every Nth
   frame" in the Tab 1 controls.
+- **`ImportError` at `import cv2` (works locally, fails on Streamlit Cloud)**: `ultralytics`
+  depends on plain `opencv-python` (GUI-enabled), which conflicts with the
+  `opencv-python-headless` pinned in `requirements.txt` — both install the same `cv2.abi3.so`
+  file, and whichever wins may need system graphics libraries (`libGL.so.1`, etc.) that a
+  minimal cloud container doesn't have by default, even though your local desktop already has
+  them installed as part of its normal graphics stack. This repo includes a `packages.txt` at
+  the root that tells Streamlit Cloud to `apt-get install` the missing libraries
+  (`libgl1`, `libglib2.0-0`, `libsm6`, `libxext6`, `libxrender1`) — make sure it's committed,
+  then use "Reboot app" in Streamlit Cloud's app menu (a plain rerun won't re-read
+  `packages.txt`).

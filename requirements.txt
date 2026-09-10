@@ -1,3 +1,9 @@
+# Note: ultralytics depends on plain opencv-python (GUI-enabled), which installs
+# the same cv2.abi3.so file as opencv-python-headless below — whichever installs
+# last wins the file on disk, so both packages end up present regardless of this
+# pin. See packages.txt (repo root) for the system libraries (libgl1, etc.) this
+# requires on minimal containers like Streamlit Cloud, which is the actual fix
+# for "ImportError" / "libGL.so.1" failures at `import cv2`.
 streamlit>=1.37,<2.0
 ultralytics>=8.2,<9.0
 opencv-python-headless>=4.9,<5.0
